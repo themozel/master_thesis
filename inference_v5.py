@@ -1,6 +1,10 @@
 import torch
 
-model = torch.hub.load("ultralytics/yolov5", "custom", "best.pt")
+model = torch.hub.load(
+    "ultralytics/yolov5", "custom", "yolov5/runs/train/exp6/weights/best.pt"
+)
 
-results = model("test.jpg")
+results = model("percept_test.png")
 results.show()
+results.print()
+results.save()

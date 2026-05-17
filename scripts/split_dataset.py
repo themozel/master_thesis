@@ -5,8 +5,8 @@ from tqdm import tqdm
 
 random.seed(42)
 
-IMAGE_DIR = "data/images/all"
-LABEL_DIR = "data/labels/all"
+IMAGE_DIR = "/home/themozel/Projects/master_thesis/signal_detection/data/PERCEPT/images"
+LABEL_DIR = "/home/themozel/Projects/master_thesis/signal_detection/data/PERCEPT/labels"
 
 OUTPUT_DIR = "data"
 
