@@ -12,22 +12,24 @@ from sklearn.metrics import precision_score, recall_score, f1_score
 # CONFIGURATION
 # ============================================================
 
-WEIGHTS_PATH = "yolov5/runs/train/exp6/weights/best.pt"
 
 TEST_IMAGES_DIR = "data/PERCEPT/images/test"
 TEST_LABELS_DIR = "data/PERCEPT/labels/test"
-
-OUTPUT_DIR = "inference_results"
 
 CONF_THRESHOLD = 0.25
 IMG_SIZE = 640
 DEVICE = "cuda:0"  # use "cpu" if needed
 
+MODEL = "yolov5"
+WEIGHTS_PATH = "yolov5/runs/train/exp8/weights/best.pt"
+# WEIGHTS_PATH = f"runs/train/exp/weights/best.pt"
+OUTPUT_DIR = f"inference_results/{MODEL}s6"
+
 # ============================================================
 # CREATE OUTPUT DIRECTORIES
 # ============================================================
 
-os.makedirs(OUTPUT_DIR, exist_ok=True)
+os.makedirs(f"{OUTPUT_DIR}", exist_ok=True)
 os.makedirs(f"{OUTPUT_DIR}/plots", exist_ok=True)
 os.makedirs(f"{OUTPUT_DIR}/predictions", exist_ok=True)
 
@@ -37,7 +39,16 @@ os.makedirs(f"{OUTPUT_DIR}/predictions", exist_ok=True)
 
 print("Loading model...")
 
-model = torch.hub.load("yolov5", "custom", path=WEIGHTS_PATH, source="local")
+# PyTorch 2.6+ changed weights_only default to True, which breaks YOLOv7/YOLOv5
+# checkpoints that contain numpy arrays. Patch torch.load temporarily.
+import functools
+_orig_torch_load = torch.load
+torch.load = functools.partial(_orig_torch_load, weights_only=False)
+
+try:
+    model = torch.hub.load(f"{MODEL}", "custom", WEIGHTS_PATH, source="local")
+finally:
+    torch.load = _orig_torch_load
 
 model.conf = CONF_THRESHOLD
 model.imgsz = IMG_SIZE
@@ -45,6 +56,7 @@ model.to(DEVICE)
 print(model.names)
 
 print("Model loaded successfully.")
+
 
 # ============================================================
 # GET TEST IMAGES
@@ -108,9 +120,11 @@ for idx, image_path in enumerate(image_paths):
     # SAVE PREDICTION IMAGE
     # --------------------------------------------------------
 
+    # OpenCV 4.11+ requires writable arrays; YOLOv7 may return read-only views
+    results.imgs = [img.copy() for img in results.imgs]
     rendered_image = results.render()[0]
 
-    output_image_path = os.path.join(OUTPUT_DIR, image_path.name)
+    output_image_path = os.path.join(OUTPUT_DIR, "predictions", image_path.name)
 
     cv2.imwrite(output_image_path, rendered_image)
 
@@ -118,7 +132,7 @@ for idx, image_path in enumerate(image_paths):
     # EXTRACT PREDICTIONS
     # --------------------------------------------------------
 
-    TARGET_CLASSES = list(range(8, 27))
+    # TARGET_CLASSES = list(range(8, 27))
 
     detections = results.xyxy[0]
 
@@ -128,7 +142,7 @@ for idx, image_path in enumerate(image_paths):
         )
     ]
 
-    results.xyxy[0] = filtered_detections
+    # results.xyxy[0] = filtered_detections
 
     # predicted_classes = detections[:, 5].int().tolist()
 
@@ -199,7 +213,7 @@ accuracy = sum([1 for gt, pred in zip(all_gt, all_pred) if gt == pred]) / len(al
 
 summary_txt = f"""
 =============================
-YOLOv5 INFERENCE SUMMARY
+{MODEL} INFERENCE SUMMARY
 =============================
 
 Images processed: {len(image_paths)}
