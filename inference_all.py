@@ -13,17 +13,21 @@ from sklearn.metrics import precision_score, recall_score, f1_score
 # ============================================================
 
 
-TEST_IMAGES_DIR = "data/PERCEPT/images/test"
-TEST_LABELS_DIR = "data/PERCEPT/labels/test"
+TEST_IMAGES_DIR = "data/PERCEPT/images_signal_only/images/test"
+TEST_LABELS_DIR = "data/PERCEPT/images_signal_only/labels/test"
 
-CONF_THRESHOLD = 0.25
-IMG_SIZE = 640
+CONF_THRESHOLD = 0.25 # 0.1 for a better recall
 DEVICE = "cuda:0"  # use "cpu" if needed
+IMG_SIZE = 640
 
 MODEL = "yolov5"
-WEIGHTS_PATH = "yolov5/runs/train/exp8/weights/best.pt"
+WEIGHTS_PATH = "yolov5/runs/train/yolov5s6_20260614_signals_only/weights/best.pt"
 # WEIGHTS_PATH = f"runs/train/exp/weights/best.pt"
-OUTPUT_DIR = f"inference_results/{MODEL}s6"
+OUTPUT_DIR = f"inference_results/{MODEL}s6_20260614_signals_only"
+
+# Save prediction images only when a detection from TARGET_CLASSES is present.
+# Set to False to save prediction images for every image.
+SAVE_ONLY_TARGET_CLASSES = False
 
 # ============================================================
 # CREATE OUTPUT DIRECTORIES
@@ -100,7 +104,7 @@ for idx, image_path in enumerate(image_paths):
     results = model(str(image_path))
 
     #### Overwriting preds with specific classes only for evaluation purposes ####
-    TARGET_CLASSES = list(range(8, 27))
+    TARGET_CLASSES = list(range(0, 4))
     pred = results.pred[0]
     mask = torch.zeros(len(pred), dtype=torch.bool, device=pred.device)
     for cls_id in TARGET_CLASSES:
@@ -117,22 +121,8 @@ for idx, image_path in enumerate(image_paths):
     latencies.append(latency_ms)
 
     # --------------------------------------------------------
-    # SAVE PREDICTION IMAGE
-    # --------------------------------------------------------
-
-    # OpenCV 4.11+ requires writable arrays; YOLOv7 may return read-only views
-    results.imgs = [img.copy() for img in results.imgs]
-    rendered_image = results.render()[0]
-
-    output_image_path = os.path.join(OUTPUT_DIR, "predictions", image_path.name)
-
-    cv2.imwrite(output_image_path, rendered_image)
-
-    # --------------------------------------------------------
     # EXTRACT PREDICTIONS
     # --------------------------------------------------------
-
-    # TARGET_CLASSES = list(range(8, 27))
 
     detections = results.xyxy[0]
 
@@ -142,9 +132,21 @@ for idx, image_path in enumerate(image_paths):
         )
     ]
 
-    # results.xyxy[0] = filtered_detections
+    # --------------------------------------------------------
+    # SAVE PREDICTION IMAGE
+    # When SAVE_ONLY_TARGET_CLASSES=True, only saves images that have at
+    # least one detection in TARGET_CLASSES (classes 21-27).
+    # Set SAVE_ONLY_TARGET_CLASSES=False to save every image.
+    # --------------------------------------------------------
 
-    # predicted_classes = detections[:, 5].int().tolist()
+    if not SAVE_ONLY_TARGET_CLASSES or len(filtered_detections) > 0:
+        # OpenCV 4.11+ requires writable arrays; YOLOv5 may return read-only views
+        results.ims = [img.copy() for img in results.ims]
+        rendered_image = results.render()[0]
+
+        output_image_path = os.path.join(OUTPUT_DIR, "predictions", image_path.name)
+
+        cv2.imwrite(output_image_path, rendered_image)
 
     # --------------------------------------------------------
     # LOAD GROUND TRUTH LABELS
