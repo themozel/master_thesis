@@ -27,10 +27,11 @@ Run command examples from project root:
 - YOLOv7:
         python inference_all.py \
             --model yolov7 \
-            --weights yolov7/runs/train/exp/weights/best.pt \
-            --test-images data/PERCEPT/images_signal_only/images/test \
-            --test-labels data/PERCEPT/images_signal_only/labels/test \
-            --output-dir inference_results/yolov7_exp
+            --project /home/amo/zeus-training/master_thesis/yolov7/runs/train/
+            --weights /home/amo/zeus-training/master_thesis/runs/train/20260719_GERALD_300ep/weights/best.pt \
+            --test-images /home/amo/zeus-training/master_thesis/data/GERALD/split_dataset/images/test \
+            --test-labels /home/amo/zeus-training/master_thesis/data/GERALD/split_dataset/labels/test \
+            --output-dir /home/amo/zeus-training/master_thesis/inference_results/yolov7_exp
 
 YOLOv5 setup example:
 - MODEL = "yolov5"
@@ -509,8 +510,22 @@ Detection AP@0.50:0.95: {map_summary['AP@[0.50:0.95]']:.4f}
 
     print(f"Saved CSV results to: {csv_path}")
 
+    class_id_to_name = (
+        model.names if isinstance(model.names, dict)
+        else {i: n for i, n in enumerate(model.names)}
+    )
+
+    per_class_ap = {
+        class_id_to_name.get(cls_id, str(cls_id)): (
+            per_class_ap50_95[cls_id] if per_class_ap50_95[cls_id] is not None else float("nan")
+        )
+        for cls_id in target_classes
+    }
+    per_class_ap = dict(sorted(per_class_ap.items()))
+
     metrics_report = {
         "summary_metrics": map_summary,
+        "per_class_ap": per_class_ap,
         "per_class_ap50": {str(k): v for k, v in per_class_ap50.items()},
         "per_class_ap50_95": {str(k): v for k, v in per_class_ap50_95.items()},
         "num_images_processed": len(image_paths),

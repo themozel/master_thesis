@@ -46,7 +46,7 @@ sys.argv = [
     "--epochs",
     "300",
     "--data",
-    "data/GERALD/data.yaml",
+    "/home/amo/zeus-training/master_thesis/data/GERALD/split_dataset/data.yaml",
     # "--cfg",
     # "yolov7/cfg/training/yolov7.yaml",
     "--weights",

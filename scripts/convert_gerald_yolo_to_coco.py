@@ -15,6 +15,7 @@ from pathlib import Path
 
 
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp"}
+DATASET_PATH = "/home/amo/zeus-training/master_thesis/data/GERALD/split_dataset_per_sequence"
 
 
 def load_class_names(data_yaml_path: Path) -> list[str]:
@@ -138,13 +139,12 @@ def convert_split(
 
 
 def main() -> None:
-    base_dir = Path(__file__).resolve().parent.parent
-    dataset_root = base_dir / "data" / "GERALD"
+    dataset_root = DATASET_PATH
 
-    data_yaml = dataset_root / "data.yaml"
-    images_root = dataset_root / "images"
-    labels_root = dataset_root / "labels"
-    annotations_root = dataset_root / "annotations"
+    data_yaml = Path(dataset_root + "/data.yaml")
+    images_root = Path(dataset_root + "/images")
+    labels_root = Path(dataset_root + "/labels")
+    annotations_root = Path(dataset_root + "/annotations")
     annotations_root.mkdir(parents=True, exist_ok=True)
 
     class_names = load_class_names(data_yaml)
