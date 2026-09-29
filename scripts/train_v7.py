@@ -38,15 +38,15 @@ def _patched_load(*args, **kwargs):
 torch.load = _patched_load
 
 sys.argv = [
-    "yolov7/train.py",
-    "--img",
+    "master_thesis/yolov7/train.py",
+    "--img-size",
     "640",
     "--batch",
-    "16",
+    "48",
     "--epochs",
-    "300",
+    "200",
     "--data",
-    "/home/amo/zeus-training/master_thesis/data/GERALD/split_dataset/data.yaml",
+    "/home/amo/zeus-training/master_thesis/data/GERALD/data.yaml",
     # "--cfg",
     # "yolov7/cfg/training/yolov7.yaml",
     "--weights",

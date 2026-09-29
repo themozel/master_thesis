@@ -2,12 +2,12 @@ import yaml
 
 # read classes
 with open(
-    "/home/amo/zeus-training/master_thesis/data/GERALD/split_dataset_per_sequence/classes.txt"
+    "/home/amo/zeus-training/percept_split/classes.txt"
 ) as f:
     class_names = [line.strip() for line in f.readlines()]
 
 YOLO_DATASET_PATH = (
-    "/home/amo/zeus-training/master_thesis/data/GERALD/split_dataset_per_sequence"
+    "/home/amo/zeus-training/percept_split"
 )
 
 data = {

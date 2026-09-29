@@ -1,9 +1,9 @@
-"""Convert GERALD YOLO labels to COCO annotation JSON files.
+"""Convert zeus-cropped YOLO labels to COCO annotation JSON files.
 
-This script reads class names from data/GERALD/data.yaml and creates:
-  data/GERALD/annotations/instances_train2017.json
-  data/GERALD/annotations/instances_val2017.json
-  data/GERALD/annotations/instances_test2017.json
+This script reads class names from data/zeus-cropped/data.yaml and creates:
+  data/zeus-cropped/annotations/instances_train2017.json
+  data/zeus-cropped/annotations/instances_val2017.json
+  data/zeus-cropped/annotations/instances_test2017.json
 
 It does not modify classes or remap class IDs.
 """
@@ -15,7 +15,7 @@ from pathlib import Path
 
 
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff", ".webp"}
-DATASET_PATH = "/home/amo/zeus-training/master_thesis/data/GERALD-cropped"
+DATASET_PATH = "/home/amo/zeus-training/master_thesis/data/zeus-cropped"
 
 
 def load_class_names(data_yaml_path: Path) -> list[str]:
