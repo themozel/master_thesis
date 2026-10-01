@@ -19,14 +19,39 @@ Needs an NVIDIA GPU for optimization_level >= 2 / finetune (the DFC falls
 back or errors without one).
 
 Examples:
-  python optimize.py --har parsed.har --list-layers
-  python optimize.py --har classifier_parsed.har --base-alls efficientnet_lite3_zeus_cropped.alls \
-      --calib calib/classifier_rgb.npy --opt-level 2 --finetune \
-      --a16-layer efficientnet_lite3_zeus_cropped/fc1 --out classifier_q.har
+    python optimize.py --har parsed.har --list-layers
+    python optimize.py --har classifier_parsed.har --base-alls efficientnet_lite3_zeus_cropped.alls \
+        --calib calib/classifier_rgb.npy --opt-level 2 --finetune \
+        --a16-layer efficientnet_lite3_zeus_cropped/fc1 --out classifier_q.har
+      
+    Yolox:
+    python optimize.py \
+        --har yolox_m.har \
+        --base-alls hailo_model_zoo/hailo_model_zoo/cfg/alls/generic/yolox_m_leaky_zeus_zeuscropped.alls \
+        --drop-line bgr_to_rgb --drop-line nms_postprocess \
+        --calib det_bgr.npy \
+        --opt-level 2 --finetune --ft-epochs 4 \
+        --a16-layer yolox_m_zeus_cropped/conv74 --a16-layer yolox_m_zeus_cropped/conv75 --a16-layer yolox_m_zeus_cropped/conv76 \
+        --a16-layer yolox_m_zeus_cropped/conv90 --a16-layer yolox_m_zeus_cropped/conv91 --a16-layer yolox_m_zeus_cropped/conv92 \
+        --a16-layer yolox_m_zeus_cropped/conv105 --a16-layer yolox_m_zeus_cropped/conv106 --a16-layer yolox_m_zeus_cropped/conv107 \
+        --extra-line 'nms_postprocess("master_thesis/hailo_reoptimize/yolox/nms_config_yolox_m_zeus_cropped.generated.json", yolox, engine=cpu)' \
+        --extra-line "performance_param(compiler_optimization_level=max)" \
+        --out master_thesis/hailo_reoptimize/yolox/har/yolox_m_optimized.har \
+        --gpu
+
+
+
 """
 
 import argparse
+import os
 import re
+import sys
+
+# The DFC picks its GPU on import and only takes one that is <5 % used, otherwise
+# it silently falls back to CPU. --gpu <idx> forces it; this must run before the import.
+if "--gpu" in sys.argv:
+    os.environ["CUDA_VISIBLE_DEVICES"] = sys.argv[sys.argv.index("--gpu") + 1]
 
 import numpy as np
 from hailo_sdk_client import ClientRunner
@@ -76,9 +101,13 @@ def main():
     ap.add_argument("--extra-line", action="append", default=[], help="Raw alls line to append")
     ap.add_argument("--drop-line", action="append", default=[],
                      help="Regex: drop matching lines of --base-alls (e.g. 'bgr_to_rgb' for yolox)")
+    ap.add_argument("--gpu", help="GPU index to force (sets CUDA_VISIBLE_DEVICES), e.g. 0. "
+                                  "Default: DFC auto-select, CPU fallback if no idle GPU")
     ap.add_argument("--out", help="output quantized HAR")
     args = ap.parse_args()
 
+    import tensorflow as tf
+    print(f"GPUs visible to TensorFlow: {tf.config.list_physical_devices('GPU') or 'none (running on CPU)'}")
     runner = ClientRunner(har=args.har)
     if args.list_layers:
         layers = runner.get_hn_dict()["layers"]

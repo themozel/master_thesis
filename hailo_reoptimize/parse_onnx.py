@@ -21,6 +21,17 @@ Examples:
   python parse_onnx.py --onnx onnx/yolox_m_leaky_zeus.onnx \
       --net-name yolox_m_leaky_zeus_zeuscropped --nodes onnx/yolox_m_leaky_zeus.end_nodes.json \
       --out har/yolox_m_parsed.har
+      
+python master_thesis/hailo_reoptimize/parse_onnx.py \
+  --onnx master_thesis/hailo_reoptimize/yolox/onnx/yolox_m_zeus_cropped.onnx \
+  --net-name yolox_m_zeus_cropped \
+  --nodes master_thesis/hailo_reoptimize/yolox/onnx/yolox_m_zeus_cropped.end_nodes.json \
+  --write-nms-config master_thesis/hailo_reoptimize/yolox/nms_config_yolox_m_zeus_cropped.generated.json \
+  --out master_thesis/hailo_reoptimize/yolox/har/yolox_m_parsed.har     
+      
+      
+      
+      
   python parse_onnx.py --onnx onnx/efficientnet_lite3_zeus_cropped.onnx \
       --net-name efficientnet_lite3_zeus_cropped --out har/efficientnet_parsed.har
 """
@@ -80,7 +91,7 @@ def write_nms_config(runner, nodes, args):
     for i, stride in enumerate((8, 16, 32)):
         reg, obj, cls = (onnx_to_hn[n] for n in nodes["end_nodes"][3 * i: 3 * i + 3])
         decoders.append({"name": f"bbox_decoder{i}", "stride": stride,
-                         "reg_layer": reg, "obj_layer": obj, "cls_layer": cls})
+                         "reg_layer": reg, "objectness_layer": obj, "cls_layer": cls})
     cfg = {"nms_scores_th": args.nms_score_th, "nms_iou_th": args.nms_iou_th,
            "image_dims": [h, w], "max_proposals_per_class": args.max_proposals,
            "classes": nodes["num_classes"], "background_removal": False,

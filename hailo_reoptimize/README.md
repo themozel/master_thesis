@@ -207,6 +207,22 @@ python compile_hef.py --har out/det_q.har --out out/yolox_m_leaky_zeus_zeuscropp
 The output convs are the layers named in the NMS config's `reg/obj/cls_layer`. There's no
 emulator check for the detector, so it's verified on hardware in step 9.
 
+### Finding `--a16-layer` names for a new model
+
+1. `python optimize.py --har <parsed.har> --list-layers` — dumps every layer's name/type. Layer
+   numbers (e.g. `conv97`) shift per export, so always re-check them for *your* HAR; don't reuse
+   numbers from a different build.
+2. **For a YOLOX/anchor-free detector**: its NMS config json (written by `parse_onnx.py
+   --write-nms-config`, see step 4) already names the sensitive layers directly, in
+   `reg_layer`/`objectness_layer`/`cls_layer` per stride (3 strides × 3 layers = 9 total for
+   YOLOX). These feed NMS directly, so quantization noise there hurts the most — pin them to
+   16-bit. Cross-check each name appears in step 1's `--list-layers` output, then prefix it with
+   the net name (`--net-name` from step 4) to get the full `--a16-layer` value.
+3. **For a plain classifier (no NMS config)**: there's no fixed rule. Either 16-bit the final
+   logits/FC layer (as done for the classifier's `fc1` in step 6), or run
+   `hailo analyze-noise <har> --data-path <calib.npy>` (step 6's troubleshooting list) to measure
+   which layers actually lose the most accuracy, and 16-bit those instead.
+
 ## 9. Verify on the Hailo host
 
 ```bash
